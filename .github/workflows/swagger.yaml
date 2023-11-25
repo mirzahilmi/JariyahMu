@@ -33,8 +33,24 @@ jobs:
           cp ${{ github.workspace }}/openapi.yaml ${{ github.workspace }}/public
           echo "Replacing SwaggerUI URL to use local spec file instead"
           sed -i 's/https:\/\/petstore.swagger.io\/v2\/swagger.json/.\/openapi.yaml/g' ${{ github.workspace }}/public/swagger-initializer.js
+      - name: 🍀 Start Deployment
+        uses: bobheadxi/deployments@v1
+        id: deployment
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: release
       - name: 🌠 Deploy to Vercel
         working-directory: ${{ github.workspace }}/public
         run: |-
           npm install --global vercel@latest
           vercel --token=${{ secrets.VERCEL_TOKEN }} --prod
+      - name: 📃 Update Deployment Status
+        uses: bobheadxi/deployments@v1
+        if: always()
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          env: ${{ steps.deployment.outputs.env }}
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
