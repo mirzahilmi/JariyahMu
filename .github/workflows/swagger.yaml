@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    name: 🪄 Build and Generate Swagger UI
+    name: 💫 Generate SwaggerUI & Deploy
     runs-on: ubuntu-latest
     steps:
       - name: 📦 Get latest code
@@ -31,10 +31,6 @@ jobs:
           docker cp swagger_doc:/usr/share/nginx/html ${{ github.workspace }}/doc
           cp ${{ github.workspace }}/openapi.yaml ${{ github.workspace }}/doc
           sed -i 's/https:\/\/petstore.swagger.io\/v2\/swagger.json/.\/openapi.yaml/g' ${{ github.workspace }}/doc/swagger-initializer.js
-  deploy:
-    name: 💫 Deploy to Vercel
-    runs-on: ubuntu-latest
-    steps:
       - name: 🚀 Deploy to Vercel
         working-directory: ${{ github.workspace }}/doc
         run: |-
