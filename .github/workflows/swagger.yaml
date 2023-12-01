@@ -28,7 +28,7 @@ jobs:
           echo "Copying generated doc files to Runner"
           docker cp swagger_doc:/usr/share/nginx/html ${{ github.workspace }}/doc
           cp ${{ github.workspace }}/openapi.yaml ${{ github.workspace }}/doc
-          sed -i 's/(https://petstore.swagger.io/v2/swagger.json){1}/./openapi.yaml/g' ${{ github.workspace }}/doc/swagger-initializer.js
+          sed -i 's/https:\/\/petstore.swagger.io\/v2\/swagger.json/.\/openapi.yaml/g' ${{ github.workspace }}/doc/swagger-initializer.js
           cat ${{ github.workspace }}/doc/swagger-initializer.js
       # - name: 🚀 Deploy to Vercel
       #   working-directory: ${{ github.workspace }}/doc
