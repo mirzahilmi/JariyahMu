@@ -23,6 +23,7 @@ jobs:
           image: swaggerapi/swagger-ui:v5.10.5
           options: --name swagger_doc --env SWAGGER_JSON=/openapi.yaml
       - name: 📂 Copy Generated Swagger UI
+        shell: bash
         run: |-
           echo "Copying generated doc files to Runner"
           docker cp swagger_doc:/usr/share/nginx/html ${{ github.workspace }}/doc
