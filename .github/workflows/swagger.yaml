@@ -29,6 +29,7 @@ jobs:
           cp ${{ github.workspace }}/openapi.yaml ${{ github.workspace }}/doc
           ls -al ${{ github.workspace }}/doc
           cat ${{ github.workspace }}/doc/swagger-initializer.js
+          docker logs swagger_doc
       # - name: 🚀 Deploy to Vercel
       #   working-directory: ${{ github.workspace }}/doc
       #   run: |-
