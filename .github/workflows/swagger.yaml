@@ -5,8 +5,10 @@ env:
 
 on:
   push:
-    paths:
-      - "openapi.yaml"
+    branches:
+      - "master"
+    # paths:
+    #   - "openapi.yaml"
 
 jobs:
   deploy:
@@ -19,14 +21,16 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: swaggerapi/swagger-ui:v5.10.5
-          options: --name swagger_doc --env SWAGGER_JSON=/openapi.yaml --volume ${{ github.workspace }}/openapi.yaml:/openapi.yaml
+          options: --name swagger_doc --env SWAGGER_JSON=/openapi.yaml
       - name: 📂 Copy Generated Swagger UI
         run: |-
           echo "Copying generated doc files to Runner"
           docker cp swagger_doc:/usr/share/nginx/html ${{ github.workspace }}/doc
           cp ${{ github.workspace }}/openapi.yaml ${{ github.workspace }}/doc
-      - name: 🚀 Deploy to Vercel
-        working-directory: ${{ github.workspace }}/doc
-        run: |-
-          npm install --global vercel@latest
-          vercel --token=${{ secrets.VERCEL_TOKEN }} --prod
+          ls -al ${{ github.workspace }}/doc
+          cat ${{ github.workspace }}/doc/swagger-initializer.js
+      # - name: 🚀 Deploy to Vercel
+      #   working-directory: ${{ github.workspace }}/doc
+      #   run: |-
+      #     npm install --global vercel@latest
+      #     vercel --token=${{ secrets.VERCEL_TOKEN }} --prod
