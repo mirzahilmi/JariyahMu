@@ -19,7 +19,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: swaggerapi/swagger-ui:v5.10.5
-          options: --name swagger_doc --env SWAGGER_JSON=openapi.yaml
+          options: --name swagger_doc --env SWAGGER_JSON=/openapi.yaml --volume ${{ github.workspace }}/openapi.yaml:/openapi.yaml
       - name: 📂 Copy Generated Swagger UI
         run: |-
           echo "Copying generated doc files to Runner"
