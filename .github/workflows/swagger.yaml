@@ -26,6 +26,7 @@ jobs:
           docker cp swagger_doc:/usr/share/nginx/html ${{ github.workspace }}/doc
           cp ${{ github.workspace }}/openapi.yaml ${{ github.workspace }}/doc
       - name: 🚀 Deploy to Vercel
+        working-directory: ${{ github.workspace }}/doc
         run: |-
           npm install --global vercel@latest
           vercel --token=${{ secrets.VERCEL_TOKEN }} --prod
