@@ -19,7 +19,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: swaggerapi/swagger-ui:v5.10.5
-          options: --name swagger_doc
+          options: --name swagger_doc --env SWAGGER_JSON=openapi.yaml
       - name: 📂 Copy Generated Swagger UI
         run: |-
           echo "Copying generated doc files to Runner"
@@ -28,4 +28,4 @@ jobs:
       - name: 🚀 Deploy to Vercel
         run: |-
           npm install --global vercel@latest
-          vercel --token=${{ secrets.VERCEL_TOKEN }}
+          vercel --token=${{ secrets.VERCEL_TOKEN }} --prod
