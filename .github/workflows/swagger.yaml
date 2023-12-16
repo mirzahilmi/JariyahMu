@@ -1,0 +1,32 @@
+name: Deploy OpenAPI Specification with Swagger to Vercel
+
+on:
+  push:
+    paths:
+      - "openapi.yaml"
+
+jobs:
+  deploy:
+    name: 💫 Deploy to Vercel
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📦 Get latest code
+        uses: actions/checkout@v4
+      - name: 🐳 Run Container
+        uses: addnab/docker-run-action@v3
+        with:
+          image: swaggerapi/swagger-ui:v5.10.5
+          options: --name swagger_doc
+      - name: 📂 Copy Generated Swagger UI
+        run: |-
+          echo "Copying generated doc files to Runner"
+          docker cp swagger_doc:/usr/share/nginx/html ${{ github.workspace }}/doc
+          cp ${{ github.workspace }}/openapi.yaml ${{ github.workspace }}/doc
+      - name: 🚀 Deploy to Vercel
+        uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          github-comment: false
+          working-directory: ${{ github.workspace }}/doc

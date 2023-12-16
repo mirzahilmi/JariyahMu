@@ -1,0 +1,79 @@
+openapi: 3.1.0
+info:
+  title: Swagger JariyahMu - OpenAPI 3.1.0
+  description: |-
+    JariyahMu's API Specification
+
+    Some useful links:
+    - [JariyahMu repository](https://github.com/MirzaHilmi/JariyahMu)
+    - [JariyahMu Grand Design](https://www.figma.com/file/i8vH72XjEuJAIOuQbq554z/JAMU-IBU?type=design&node-id=1-3&mode=design&t=Ggptr49h65rWjxa2-0)
+  contact:
+    email: exquisitemirza@student.ub.ac.id
+  license:
+    name: MIT
+    url: https://github.com/MirzaHilmi/JariyahMu/blob/master/LICENSE
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Version 1
+  - url: http://localhost:8080/api/v2
+    description: Version 2
+tags:
+  - name: plant
+    description: Everything about plants
+  - name: social media
+    description: Social Media operations
+  - name: user
+    description: Operations about user
+paths:
+  /signup:
+    post:
+      tags:
+        - user
+      summary: New User Signing up
+      description: Store new user and generate JSON Web Token
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignUpRequest"
+            application/x-www-form-urlencoded:
+              schema:
+                $ref: "#/components/schemas/SignUpRequest"
+        "400":
+          description: Invalid email value or different password & passwordConfirmation value
+        "403":
+          description: User already logged-in
+components:
+  schemas:
+    SignUpRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          examples: [John Doe]
+        email:
+          type: string
+          format: email
+          examples: [johndoe@gmail.com]
+        password:
+          type: string
+          format: password
+          examples: [12345678]
+        passwordConfirmation:
+          type: string
+          format: password
+          examples: [12345678]
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          examples: [johndoe68@gmail.com]
+        password:
+          type: string
+          format: password
+          examples: [12345678]
