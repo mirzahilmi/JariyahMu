@@ -204,7 +204,7 @@ paths:
     get:
       tags:
         - social-media
-      operationId: fetchUserProfile
+      operationId: fetchUserResource
       summary: Fetch User Information (Profile)
       description: Fetch User Information associated from the JSON Web Token
       security:
@@ -253,6 +253,56 @@ paths:
               example:
                 code: 404
                 message: User not found
+    patch:
+      tags:
+        - social-media
+      operationId: patchUserResource
+      summary: Update User Information
+      description: Update User Resource from the associated JWT
+      security:
+        - JWTAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                profilePicture:
+                  type: string
+                  contentMediaType: image/png
+                  contentEncoding: base64
+            example:
+              profilePicture: picture.png
+          application/json:
+            schema:
+              type: object
+              properties:
+                profilePicture:
+                  type: string
+                  contentMediaType: image/png
+                  contentEncoding: base64
+            example:
+              profilePicture: picture.png
+      responses:
+        "200":
+          description: Successful User Resource Patch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIResponse"
+              example:
+                code: 200
+                message: Resource Patched
+        "401":
+          description: Request Unauthorized. Perhaps JWT Expired or Fraud
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneralError"
+              example:
+                code: 401
+                message: Unauthorized
 components:
   schemas:
     GeneralError:
@@ -286,8 +336,6 @@ components:
                 example: Password Confirmation must be the same as the specified Password
     APIResponse:
       type: object
-      required:
-        - code
       properties:
         code:
           type: integer
