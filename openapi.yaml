@@ -22,8 +22,6 @@ tags:
     description: Operations related to social media interactions and integrations
   - name: plants
     description: Operations related to plant data, information, and management
-security:
-  - JWTAuth: []
 paths:
   /auth/signup:
     post:
