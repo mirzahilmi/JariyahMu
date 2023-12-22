@@ -14,9 +14,7 @@ info:
   version: 1.0.0
 servers:
   - url: http://localhost:8080/api/v1
-    description: Version 1
-  - url: http://localhost:8080/api/v2
-    description: Version 2
+    description: Development server
 tags:
   - name: authentication
     description: Authentication mechanisms and requirements for accessing the API
@@ -24,6 +22,8 @@ tags:
     description: Operations related to social media interactions and integrations
   - name: plants
     description: Operations related to plant data, information, and management
+security:
+  - JWTAuth: []
 paths:
   /auth/signup:
     post:
@@ -96,7 +96,7 @@ paths:
                 - password
                 - passwordConfirmation
       responses:
-        "200":
+        "201":
           description: Success Sign up Request
           content:
             application/json:
@@ -108,8 +108,8 @@ paths:
                   token:
                     type: string
                     description: JSON Web Token generated from provided resource
-                    example: |-
-                      eyJhbGciOiJIUzI1N.eyJzdWIiOiIxMjM0NTY3ODkwIiw.SflKxwRJSMeKKF2QT4fwp
+              example:
+                token: eyJhbGciOiJIUzI1N.eyJzdWIiOiIxMjM0NTY3ODkwIiw.SflKxwRJSMeKKF2QT4fwp
         "403":
           description: User already authenticated and JSON Web Token is still valid
           content:
@@ -182,8 +182,8 @@ paths:
                   token:
                     type: string
                     description: JSON Web Token generated from provided resource
-                    example: |-
-                      eyJhbGciOiJIUzI1N.eyJzdWIiOiIxMjM0NTY3ODkwIiw.SflKxwRJSMeKKF2QT4fwp
+              example:
+                token: eyJhbGciOiJIUzI1N.eyJzdWIiOiIxMjM0NTY3ODkwIiw.SflKxwRJSMeKKF2QT4fwp
         "401":
           description: Incorrect or fraud credential
           content:
@@ -202,6 +202,59 @@ paths:
               example:
                 code: 403
                 message: Action forbidden, already authenticated
+  /user/profile:
+    get:
+      tags:
+        - social-media
+      operationId: fetchUserProfile
+      summary: Fetch User Information (Profile)
+      description: Fetch User Information associated from the JSON Web Token
+      security:
+        - JWTAuth: []
+      responses:
+        "200":
+          description: Successful Fetch User Info Request
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - user
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                    description: User Resource
+                    required:
+                      - profilePicture
+                      - fullName
+                      - email
+                      - createdAt
+                      - updatedAt
+              example:
+                user:
+                  profilePicture: https://example.com/foo.png
+                  fullName: Handedius Sando Sianipar
+                  email: sando67@gmail.com
+                  createdAt: 2038-01-19 03:14:07
+                  updatedAt: 2038-01-19 03:14:07
+        "401":
+          description: Request Unauthorized. Perhaps JWT Expired or Fraud
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneralError"
+              example:
+                code: 401
+                message: Unauthorized
+        "404":
+          description: Cannot find corresponding User Resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneralError"
+              example:
+                code: 404
+                message: User not found
 components:
   schemas:
     GeneralError:
@@ -325,3 +378,9 @@ components:
           type: string
           format: date-time
           example: 2038-01-19 03:14:07
+  securitySchemes:
+    JWTAuth:
+      type: http
+      description: Authorization and authentication based on JSON Web Token
+      scheme: bearer
+      bearerFormat: JWT
