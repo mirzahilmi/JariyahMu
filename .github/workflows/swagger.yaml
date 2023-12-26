@@ -15,7 +15,7 @@ jobs:
     permissions:
       deployments: write
     steps:
-      - name: 📦 Get latest code
+      - name: 📝 Get latest API specification
         uses: actions/checkout@v4
         with:
           sparse-checkout: |-
