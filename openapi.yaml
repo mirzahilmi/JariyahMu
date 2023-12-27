@@ -25,7 +25,7 @@ tags:
   - name: user
     description: Operations about user
 paths:
-  /signup:
+  /auth/signup:
     post:
       tags:
         - user
@@ -35,6 +35,36 @@ paths:
       requestBody:
         required: true
         content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  description: User Full Name
+                  type: string
+                email:
+                  description: User Email
+                  type: string
+                  format: email
+                password:
+                  description: User Password that should at least be 8 characters long
+                  type: string
+                  format: password
+                  minLength: 8
+                passwordConfirmation:
+                  description: Repeated password from the `password` property
+                  type: string
+                  format: password
+              example:
+                fullName: John Smith Doe
+                email: johndoe67@gmail.com
+                password: 12345678
+                passwordConfirmation: 12345678
+              required:
+                - fullName
+                - email
+                - password
+                - passwordConfirmation
           application/json:
             schema:
               type: object
@@ -50,10 +80,16 @@ paths:
                   description: User Password that should at least 8 characters long
                   type: string
                   format: password
+                  minLength: 8
                 passwordConfirmation:
                   description: Repeated password from the `password` property
                   type: string
                   format: password
+              example:
+                fullName: John Smith Doe
+                email: johndoe67@gmail.com
+                password: 12345678
+                passwordConfirmation: 12345678
               required:
                 - fullName
                 - email
@@ -61,51 +97,164 @@ paths:
                 - passwordConfirmation
       responses:
         "200":
-          description: Successful operation
+          description: Success Sign up Request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SignUpRequest"
-            application/x-www-form-urlencoded:
-              schema:
-                $ref: "#/components/schemas/SignUpRequest"
-        "400":
-          description: Invalid email value or different password & passwordConfirmation value
+                type: object
+                required:
+                  - token
+                properties:
+                  token:
+                    type: string
+                    description: JSON Web Token generated from provided resource
+                    example: |-
+                      eyJhbGciOiJIUzI1N.eyJzdWIiOiIxMjM0NTY3ODkwIiw.SflKxwRJSMeKKF2QT4fwp
         "403":
-          description: User already logged-in
-  /login:
+          description: User already authenticated and JSON Web Token is still valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneralError"
+              example:
+                code: 403
+                message: Action forbidden, already authenticated
+  /auth/login:
     post:
-
+      tags:
+        - user
+      operationId: userLogIn
+      summary: User Logging in
+      description: Validate Identity and Generate JSON Web Token
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  description: User Full Name
+                  type: string
+                email:
+                  description: User Email
+                  type: string
+                  format: email
+                password:
+                  description: User Password that should at least be 8 characters long
+                  type: string
+                  format: password
+                  minLength: 8
+                passwordConfirmation:
+                  description: Repeated password from the `password` property
+                  type: string
+                  format: password
+              example:
+                fullName: John Smith Doe
+                email: johndoe67@gmail.com
+                password: 12345678
+                passwordConfirmation: 12345678
+              required:
+                - fullName
+                - email
+                - password
+                - passwordConfirmation
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  description: User Full Name
+                  type: string
+                email:
+                  description: User Email
+                  type: string
+                  format: email
+                password:
+                  description: User Password that should at least 8 characters long
+                  type: string
+                  format: password
+                  minLength: 8
+                passwordConfirmation:
+                  description: Repeated password from the `password` property
+                  type: string
+                  format: password
+              example:
+                fullName: John Smith Doe
+                email: johndoe67@gmail.com
+                password: 12345678
+                passwordConfirmation: 12345678
+              required:
+                - fullName
+                - email
+                - password
+                - passwordConfirmation
+      responses:
+        "200":
+          description: Success Sign up Request
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - token
+                properties:
+                  token:
+                    type: string
+                    description: JSON Web Token generated from provided resource
+                    example: |-
+                      eyJhbGciOiJIUzI1N.eyJzdWIiOiIxMjM0NTY3ODkwIiw.SflKxwRJSMeKKF2QT4fwp
+        "403":
+          description: User already authenticated and JSON Web Token is still valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneralError"
+              example:
+                code: 403
+                message: Action forbidden, already authenticated
 components:
   schemas:
-    SignUpRequest:
+    GeneralError:
       type: object
       properties:
-        fullName:
+        code:
+          type: integer
+          description: HTTP Response Status Code for the Error
+          format: int32
+          example: [401]
+        message:
           type: string
-          examples: [John Doe]
-        email:
-          type: string
-          format: email
-          examples: [johndoe@gmail.com]
-        password:
-          type: string
-          format: password
-          examples: [12345678]
-        passwordConfirmation:
-          type: string
-          format: password
-          examples: [12345678]
-    LoginRequest:
+          description: |-
+            The Error Response Message. 
+            Defaults to the HTTP Response Status Code Message
+          example: Unauthorized
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              parameter:
+                type: string
+                description: The Parameter Name thats causing the Error
+                example: passwordConfirmation
+              message:
+                type: string
+                description: The Error Message of the corresponding Parameter
+                example: Password Confirmation must be the same as the specified Password
+    APIResponse:
       type: object
       properties:
-        email:
+        code:
+          type: integer
+          description: |-
+            HTTP Response Status Code for the Response. 
+            Ideally this schema will always be used for a Successful Request
+          format: int32
+          example: 200
+        message:
           type: string
-          format: email
-          examples: [johndoe68@gmail.com]
-        password:
-          type: string
-          format: password
-          examples: [12345678]
-    ErrorResponse:
-      type:
+          description: |-
+            The API Response Message. 
+            Defaults to the HTTP Response Status Code Message
+          example: Transaction Succeed
