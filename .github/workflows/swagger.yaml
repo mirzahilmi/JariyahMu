@@ -40,7 +40,7 @@ jobs:
         id: deployment
         with:
           step: start
-          env: 📨 Preview - OAS 3.1.0
+          env: Release - API Specification
       - name: 🌠 Deploy to Vercel
         working-directory: ${{ github.workspace }}/public
         run: |-
