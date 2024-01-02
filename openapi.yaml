@@ -18,19 +18,19 @@ servers:
   - url: http://localhost:8080/api/v2
     description: Version 2
 tags:
-  - name: plant
-    description: Everything about plants
-  - name: social media
-    description: Social Media operations
-  - name: user
-    description: Operations about user
+  - name: authentication
+    description: Authentication mechanisms and requirements for accessing the API
+  - name: social-media
+    description: Operations related to social media interactions and integrations
+  - name: plants
+    description: Operations related to plant data, information, and management
 paths:
   /auth/signup:
     post:
       tags:
-        - user
+        - authentication
       operationId: signupUser
-      summary: New User Signing up
+      summary: User Signing up
       description: Store new user and generate JSON Web Token
       requestBody:
         required: true
@@ -47,7 +47,7 @@ paths:
                   type: string
                   format: email
                 password:
-                  description: User Password that should at least be 8 characters long
+                  description: User Password that should be at least 8 characters long
                   type: string
                   format: password
                   minLength: 8
@@ -122,7 +122,7 @@ paths:
   /auth/login:
     post:
       tags:
-        - user
+        - authentication
       operationId: userLogIn
       summary: User Logging in
       description: Validate Identity and Generate JSON Web Token
@@ -132,40 +132,29 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               type: object
+              required:
+                - email
+                - password
               properties:
-                fullName:
-                  description: User Full Name
-                  type: string
                 email:
                   description: User Email
                   type: string
                   format: email
                 password:
-                  description: User Password that should at least be 8 characters long
+                  description: User Password that should be at least 8 characters long
                   type: string
                   format: password
                   minLength: 8
-                passwordConfirmation:
-                  description: Repeated password from the `password` property
-                  type: string
-                  format: password
               example:
-                fullName: John Smith Doe
                 email: johndoe67@gmail.com
                 password: 12345678
-                passwordConfirmation: 12345678
-              required:
-                - fullName
-                - email
-                - password
-                - passwordConfirmation
           application/json:
             schema:
               type: object
+              required:
+                - email
+                - password
               properties:
-                fullName:
-                  description: User Full Name
-                  type: string
                 email:
                   description: User Email
                   type: string
@@ -175,23 +164,14 @@ paths:
                   type: string
                   format: password
                   minLength: 8
-                passwordConfirmation:
-                  description: Repeated password from the `password` property
-                  type: string
-                  format: password
               example:
                 fullName: John Smith Doe
                 email: johndoe67@gmail.com
                 password: 12345678
                 passwordConfirmation: 12345678
-              required:
-                - fullName
-                - email
-                - password
-                - passwordConfirmation
       responses:
         "200":
-          description: Success Sign up Request
+          description: Success Log in Attempt
           content:
             application/json:
               schema:
@@ -205,18 +185,31 @@ paths:
                     example: |-
                       eyJhbGciOiJIUzI1N.eyJzdWIiOiIxMjM0NTY3ODkwIiw.SflKxwRJSMeKKF2QT4fwp
         "403":
-          description: User already authenticated and JSON Web Token is still valid
+          description: Potential Authentication related errors
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/GeneralError"
-              example:
-                code: 403
-                message: Action forbidden, already authenticated
+              examples:
+                already-authenticated:
+                  summary: User already authenticated
+                  description: |-
+                    User already authenticated, thus forbidden from attempting relogged in 
+                    unless token been invalidated.
+                  value:
+                    code: 403
+                    message: Action forbidden, already authenticated
+                credential-errors:
+                  summary: Incorrect or fraud credential
+                  value:
+                    code: 401
+                    message: Incorrect user credential
 components:
   schemas:
     GeneralError:
       type: object
+      required:
+        - code
       properties:
         code:
           type: integer
@@ -244,6 +237,8 @@ components:
                 example: Password Confirmation must be the same as the specified Password
     APIResponse:
       type: object
+      required:
+        - code
       properties:
         code:
           type: integer
