@@ -29,8 +29,36 @@ paths:
     post:
       tags:
         - user
+      operationId: signupUser
       summary: New User Signing up
       description: Store new user and generate JSON Web Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  description: User Full Name
+                  type: string
+                email:
+                  description: User Email
+                  type: string
+                  format: email
+                password:
+                  description: User Password that should at least 8 characters long
+                  type: string
+                  format: password
+                passwordConfirmation:
+                  description: Repeated password from the `password` property
+                  type: string
+                  format: password
+              required:
+                - fullName
+                - email
+                - password
+                - passwordConfirmation
       responses:
         "200":
           description: Successful operation
@@ -45,6 +73,9 @@ paths:
           description: Invalid email value or different password & passwordConfirmation value
         "403":
           description: User already logged-in
+  /login:
+    post:
+
 components:
   schemas:
     SignUpRequest:
@@ -76,3 +107,5 @@ components:
           type: string
           format: password
           examples: [12345678]
+    ErrorResponse:
+      type:
