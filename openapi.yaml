@@ -184,26 +184,24 @@ paths:
                     description: JSON Web Token generated from provided resource
                     example: |-
                       eyJhbGciOiJIUzI1N.eyJzdWIiOiIxMjM0NTY3ODkwIiw.SflKxwRJSMeKKF2QT4fwp
-        "403":
-          description: Potential Authentication related errors
+        "401":
+          description: Incorrect or fraud credential
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/GeneralError"
-              examples:
-                already-authenticated:
-                  summary: User already authenticated
-                  description: |-
-                    User already authenticated, thus forbidden from attempting relogged in 
-                    unless token been invalidated.
-                  value:
-                    code: 403
-                    message: Action forbidden, already authenticated
-                credential-errors:
-                  summary: Incorrect or fraud credential
-                  value:
-                    code: 401
-                    message: Incorrect user credential
+              example:
+                code: 401
+                message: Invalid credential
+        "403":
+          description: User already authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneralError"
+              example:
+                code: 403
+                message: Action forbidden, already authenticated
 components:
   schemas:
     GeneralError:
