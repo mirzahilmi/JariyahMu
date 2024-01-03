@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Swagger JariyahMu - OpenAPI 3.1.0
   description: |-
-    JariyahMu's API Specification
+    JariyahMu's API Specification.
     Some useful links:
     - [JariyahMu repository](https://github.com/MirzaHilmi/JariyahMu)
     - [JariyahMu Grand Design](https://www.figma.com/file/i8vH72XjEuJAIOuQbq554z/JAMU-IBU?type=design&node-id=1-3&mode=design&t=Ggptr49h65rWjxa2-0)
@@ -252,4 +252,78 @@ components:
           description: |-
             The API Response Message. 
             Defaults to the HTTP Response Status Code Message
-          example: Transaction Succeed
+          example: OK
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 26
+          maxLength: 26
+          example: 01HK6TQA7V75K1D4QS6CDK7PXY
+        fullName:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: johndoe67@gmail.com
+        password:
+          type: string
+          format: password
+          example: $2a$12$Zf7NuWW8WaI.ECAiQcenSux.pc1KecPmd/io0rwJ5I4azvh1CMftC
+        profilePicture:
+          type: string
+          description: Picture Image Path or URL
+          example: https://example.com/foo.png
+        createdAt:
+          type: string
+          format: date-time
+          example: 2038-01-19 03:14:07
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2038-01-19 03:14:07
+    PlantPost:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 26
+          maxLength: 26
+          example: 01HK6TQA7V75K1D4QS6CDK7PXY
+        picture:
+          type: string
+          description: Picture Image Path or URL
+          example: https://example.com/foo.png
+        type:
+          type: string
+          description: Plant types or common name
+          example: Orange
+        age:
+          type: integer
+          description: Plant Age
+          format: int32
+          example: 4
+        description:
+          type: string
+          description: The correlated plant post description
+          example: Fresh oranges we harvest this morning 🍊🌿
+        latitude:
+          type: number
+          description: Latitude value of the location geo coordinate
+          format: double
+          example: 38.8951
+        longitude:
+          type: number
+          description: Longitude value of the location geo coordinate
+          format: double
+          example: 38.8951
+        createdAt:
+          type: string
+          format: date-time
+          example: 2038-01-19 03:14:07
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2038-01-19 03:14:07
