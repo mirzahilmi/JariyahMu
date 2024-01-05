@@ -20,8 +20,6 @@ tags:
     description: Authentication mechanisms and requirements for accessing the API
   - name: social-media
     description: Operations related to social media interactions and integrations
-  - name: plants
-    description: Operations related to plant data, information, and management
 paths:
   /auth/signup:
     post:
@@ -294,6 +292,61 @@ paths:
               example:
                 code: 200
                 message: Resource Patched
+        "401":
+          description: Request Unauthorized. Perhaps JWT Expired or Fraud
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneralError"
+              example:
+                code: 401
+                message: Unauthorized
+  /feed:
+    get:
+      tags:
+        - social-media
+      operationId: fetchFeed
+      summary: Fetch Feed
+      description: |-
+        Fetch set of Post (Feed) that are close to what user preferred 
+        based on user activities
+      security:
+        - JWTAuth: []
+      parameters:
+        - name: anchor
+          in: query
+          description: |-
+            A Value taken from last post item createdAt property
+            that used as a cursor for pagination
+          required: false
+          schema:
+            type: string
+            description: DateTime value taken from CreatedAt property
+            format: date-time
+            example: 2038-01-19 03:14:07
+      responses:
+        "200":
+          description: Successful Fetch Feed Request
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - posts
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PlantPost"
+        "204":
+          description: There is no resource anymore to fetch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIResponse"
+              example:
+                code: 204
+                message: No More Resource
         "401":
           description: Request Unauthorized. Perhaps JWT Expired or Fraud
           content:
