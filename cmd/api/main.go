@@ -12,6 +12,7 @@ import (
 	"github.com/MirzaHilmi/JariyahMu/internal/env"
 	"github.com/MirzaHilmi/JariyahMu/internal/smtp"
 	"github.com/MirzaHilmi/JariyahMu/internal/version"
+	"github.com/joho/godotenv"
 
 	"github.com/lmittmann/tint"
 )
@@ -61,18 +62,23 @@ type application struct {
 func run(logger *slog.Logger) error {
 	var cfg config
 
-	cfg.baseURL = env.GetString("BASE_URL", "http://localhost:4444")
-	cfg.httpPort = env.GetInt("HTTP_PORT", 4444)
-	cfg.basicAuth.username = env.GetString("BASIC_AUTH_USERNAME", "admin")
-	cfg.basicAuth.hashedPassword = env.GetString("BASIC_AUTH_HASHED_PASSWORD", "$2a$10$jRb2qniNcoCyQM23T59RfeEQUbgdAXfR6S0scynmKfJa5Gj3arGJa")
+	err := godotenv.Load()
+	if err != nil {
+		return err
+	}
+
+	cfg.baseURL = env.GetString("BASE_URL", "http://localhost:8080")
+	cfg.httpPort = env.GetInt("HTTP_PORT", 8080)
+	cfg.basicAuth.username = env.GetString("BASIC_AUTH_USERNAME", "")
+	cfg.basicAuth.hashedPassword = env.GetString("BASIC_AUTH_HASHED_PASSWORD", "")
 	cfg.db.dsn = env.GetString("DB_DSN", "user:pass@tcp(localhost:3306)/example?parseTime=true")
-	cfg.db.automigrate = env.GetBool("DB_AUTOMIGRATE", true)
-	cfg.jwt.secretKey = env.GetString("JWT_SECRET_KEY", "kjp7wsijonl6zup56kzglyyqdmk7y7t4")
-	cfg.smtp.host = env.GetString("SMTP_HOST", "example.smtp.host")
-	cfg.smtp.port = env.GetInt("SMTP_PORT", 25)
-	cfg.smtp.username = env.GetString("SMTP_USERNAME", "example_username")
-	cfg.smtp.password = env.GetString("SMTP_PASSWORD", "pa55word")
-	cfg.smtp.from = env.GetString("SMTP_FROM", "Example Name <no_reply@example.org>")
+	cfg.db.automigrate = env.GetBool("DB_AUTOMIGRATE", false)
+	cfg.jwt.secretKey = env.GetString("JWT_SECRET_KEY", "")
+	cfg.smtp.host = env.GetString("SMTP_HOST", "")
+	cfg.smtp.port = env.GetInt("SMTP_PORT", 0)
+	cfg.smtp.username = env.GetString("SMTP_USERNAME", "")
+	cfg.smtp.password = env.GetString("SMTP_PASSWORD", "")
+	cfg.smtp.from = env.GetString("SMTP_FROM", "")
 
 	showVersion := flag.Bool("version", false, "display version and exit")
 
