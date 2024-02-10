@@ -1,3 +1,3 @@
 # JariyahMu
 
-🚧 Ooopss, looks like the project is still under construction. Please wait patiently~ 🚧
+🚧 Ooopss, looks like the project is still under construction. Come back later 🚧
