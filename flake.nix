@@ -16,6 +16,8 @@
     in {
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
+          delve
+          go-migrate
           (go_1_22.overrideAttrs (prev: rec {
             version = "1.22.0";
             src = fetchurl {
@@ -23,9 +25,8 @@
               hash = "sha256-TRlsPUGg1sHfxk0E48wfYIsMQ2vYe3Bgzj4jI04fTVw=";
             };
           }))
-          gopls
-          delve
           golangci-lint
+          gopls
         ];
       };
     });
