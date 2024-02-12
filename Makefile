@@ -80,7 +80,11 @@ swagger/down:
 ## migrations/new name=$1: create a new database migration
 .PHONY: migrations/new
 migrations/new:
-	go run -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest create -seq -ext=.sql -dir=./assets/migrations ${name}
+ifdef table
+	migrate create -dir db/migrations -ext sql -seq ${table}
+else
+	echo "must define \`table\` argument"
+endif
 
 ## migrations/up: apply all up database migrations
 .PHONY: migrations/up
@@ -101,8 +105,8 @@ migrations/goto:
 .PHONY: migrations/force
 migrations/force:
 	go run -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path=./assets/migrations -database="mysql://${DB_DSN}" force ${version}
+.PHONY: migrations/version
 
 ## migrations/version: print the current in-use migration version
-.PHONY: migrations/version
 migrations/version:
 	go run -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path=./assets/migrations -database="mysql://${DB_DSN}" version
