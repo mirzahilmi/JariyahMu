@@ -81,7 +81,7 @@ swagger/down:
 .PHONY: migrations/new
 migrations/new:
 ifdef table
-	migrate create -dir db/migrations -ext sql -seq ${table}
+	migrate create -dir db/migrations -ext sql ${table}
 else
 	echo "must define \`table\` argument"
 endif
