@@ -13,7 +13,7 @@ info:
     url: https://github.com/MirzaHilmi/JariyahMu/blob/master/LICENSE
   version: 1.0.0
 servers:
-  - url: http://localhost:8080/api/v1
+  - url: https://jariyahmu.cloud/api/v1
     description: Development server
 tags:
   - name: authentication
