@@ -1,23 +1,68 @@
 package repository
 
 import (
-	"golang-clean-architecture/internal/pkg/model/entity"
+	"context"
 
-	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
+	"github.com/MirzaHilmi/JariyahMu/internal/pkg/model"
+	"github.com/jmoiron/sqlx"
 )
 
+type UserRepositoryItf interface {
+	Create(ctx context.Context, user model.StoreUser) error
+	GetIDByEmail(ctx context.Context, email string) (string, error)
+	UpdatePassword(ctx context.Context, id, hashedPassword string) error
+	CreateResetAttempt(ctx context.Context, attempt model.StoreResetAttempt) error
+	DeleteOldResetAttempt(ctx context.Context, id string) error
+	GetResetAttemptID(ctx context.Context, id, token string) (string, error)
+	UpdateResetAttemptStatus(ctx context.Context, id string) error
+}
+
 type UserRepository struct {
-	Repository[entity.User]
-	Log *logrus.Logger
+	db *sqlx.DB
 }
 
-func NewUserRepository(log *logrus.Logger) *UserRepository {
-	return &UserRepository{
-		Log: log,
+func NewUserRepository(db *sqlx.DB) UserRepositoryItf {
+	return &UserRepository{db}
+}
+
+func (repo *UserRepository) Create(ctx context.Context, user model.StoreUser) error {
+	namedQuery, args, err := sqlx.Named(queryCreateUser, user)
+	if err != nil {
+		return err
 	}
+	query := sqlx.Rebind(sqlx.QUESTION, namedQuery)
+
+	tx, err := repo.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	if _, err = tx.ExecContext(ctx, query, args...); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (r *UserRepository) FindByToken(db *gorm.DB, user *entity.User, token string) error {
-	return db.Where("token = ?", token).First(user).Error
+func (repo *UserRepository) GetIDByEmail(ctx context.Context, email string) (string, error) {
+	return "", nil
+}
+func (repo *UserRepository) UpdatePassword(ctx context.Context, id, hashedPassword string) error {
+	return nil
+}
+func (repo *UserRepository) CreateResetAttempt(ctx context.Context, attempt model.StoreResetAttempt) error {
+	return nil
+}
+func (repo *UserRepository) DeleteOldResetAttempt(ctx context.Context, id string) error {
+	return nil
+}
+func (repo *UserRepository) GetResetAttemptID(ctx context.Context, id, token string) (string, error) {
+	return "", nil
+}
+func (repo *UserRepository) UpdateResetAttemptStatus(ctx context.Context, id string) error {
+	return nil
 }

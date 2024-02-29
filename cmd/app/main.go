@@ -2,26 +2,28 @@ package main
 
 import (
 	"fmt"
-	"golang-clean-architecture/internal/app/config"
+
+	"github.com/MirzaHilmi/JariyahMu/internal/app/config"
 )
 
 func main() {
-	viperConfig := config.NewViper()
-	log := config.NewLogger(viperConfig)
-	db := config.NewDatabase(viperConfig, log)
-	validator := config.NewValidator(viperConfig)
-	app := config.NewFiber(viperConfig)
+	viper := config.NewViper()
+	app := config.NewFiber(&viper)
+	log := config.NewLogger(&viper)
+	db := config.NewDatabase(&viper)
+	validator := config.NewValidator()
 
-	config.Bootstrap(&config.BootstrapConfig{
-		DB:       db,
+	config.Bootstrap(&config.Config{
+		Viper:    &viper,
 		App:      app,
+		DB:       &db,
 		Log:      log,
-		Validate: validator,
-		Config:   viperConfig,
+		Validate: &validator,
 	})
 
-	webPort := viperConfig.GetInt("web.port")
-	err := app.Listen(fmt.Sprintf(":%d", webPort))
+	serverPort := viper.GetInt("APP_PORT")
+
+	err := app.Listen(fmt.Sprintf(":%d", serverPort))
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

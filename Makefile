@@ -44,15 +44,10 @@ test/cover:
 	go test -v -race -buildvcs -coverprofile=/tmp/coverage.out ./...
 	go tool cover -html=/tmp/coverage.out
 
-## build: build the cmd/api application
-.PHONY: build
-build:
-	go build -o=/tmp/bin/api ./cmd/api
-	
 ## run: run the cmd/api application
 .PHONY: run
-run: build
-	/tmp/bin/api
+run:
+	go run cmd/app/main.go
 
 ## run/live: run the application with reloading on file changes
 .PHONY: run/live
