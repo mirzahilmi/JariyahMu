@@ -1,4 +1,4 @@
-    FROM golang:1.22.0-alpine3.19 AS Builder
+FROM golang:1.22.0-alpine3.19 AS Builder
 
 LABEL authors="mirza.hilmi@gmail.com"
 
