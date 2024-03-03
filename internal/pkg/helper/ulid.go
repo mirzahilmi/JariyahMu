@@ -9,13 +9,14 @@ import (
 )
 
 func NewULID() (ulid.ULID, error) {
-	entropy := pool.EntropyPool.Get().(*rand.Rand)
 	ms := ulid.Timestamp(time.Now())
+	entropy := pool.EntropyPool.Get().(*rand.Rand)
 
 	id, err := ulid.New(ms, entropy)
 	if err != nil {
 		return ulid.ULID{}, err
 	}
+	pool.EntropyPool.Put(entropy)
 
 	return id, nil
 }
