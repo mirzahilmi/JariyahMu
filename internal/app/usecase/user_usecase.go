@@ -9,7 +9,7 @@ import (
 )
 
 type UserUsecaseItf interface {
-	RegisterUser(ctx context.Context, user model.StoreUser) (string, error)
+	RegisterUser(ctx context.Context, user model.CreateUserRequest) (string, error)
 }
 
 type UserUsecase struct {
@@ -24,13 +24,24 @@ func NewUserUsecase(
 	return &UserUsecase{repo: repo, encode: encode}
 }
 
-func (usc *UserUsecase) RegisterUser(ctx context.Context, user model.StoreUser) (string, error) {
-	id, err := helper.NewULID()
+func (usc *UserUsecase) RegisterUser(ctx context.Context, userRequest model.CreateUserRequest) (string, error) {
+	id, err := helper.ULID()
 	if err != nil {
 		return "", nil
 	}
 
-	user.ID = id.String()
+	hashed, err := helper.BcryptHash(userRequest.Password)
+	if err != nil {
+		return "", nil
+	}
+
+	user := model.StoreUser{
+		ID:             id,
+		FullName:       userRequest.FullName,
+		Email:          userRequest.Email,
+		HashedPassword: hashed,
+	}
+
 	if err := usc.repo.Create(ctx, user); err != nil {
 		return "", err
 	}

@@ -4,19 +4,18 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/MirzaHilmi/JariyahMu/internal/pkg/pool"
 	"github.com/oklog/ulid/v2"
 )
 
-func NewULID() (ulid.ULID, error) {
+func ULID() (string, error) {
 	ms := ulid.Timestamp(time.Now())
-	entropy := pool.EntropyPool.Get().(*rand.Rand)
+	entropy := entropyPool.Get().(*rand.Rand)
 
 	id, err := ulid.New(ms, entropy)
-	pool.EntropyPool.Put(entropy)
+	entropyPool.Put(entropy)
 	if err != nil {
-		return ulid.ULID{}, err
+		return "", err
 	}
 
-	return id, nil
+	return id.String(), nil
 }

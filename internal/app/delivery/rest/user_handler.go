@@ -2,12 +2,32 @@ package rest
 
 import (
 	"github.com/MirzaHilmi/JariyahMu/internal/app/usecase"
+	"github.com/MirzaHilmi/JariyahMu/internal/pkg/model"
+	"github.com/gofiber/fiber/v2"
 )
 
-type UserDelivery struct {
+type UserHandler struct {
 	usc usecase.UserUsecaseItf
 }
 
-func NewUserDelivery(usc usecase.UserUsecaseItf) UserDelivery {
-	return UserDelivery{usc}
+func NewUserHandler(usc usecase.UserUsecaseItf, router fiber.Router) {
+	userHandler := UserHandler{usc}
+
+	router.Post("/signup", userHandler.SignUp)
+}
+
+func (h *UserHandler) SignUp(c *fiber.Ctx) error {
+	var payloadUser model.CreateUserRequest
+	if err := c.BodyParser(&payloadUser); err != nil {
+		return err
+	}
+
+	token, err := h.usc.RegisterUser(c.Context(), payloadUser)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(fiber.Map{
+		"token": token,
+	})
 }
