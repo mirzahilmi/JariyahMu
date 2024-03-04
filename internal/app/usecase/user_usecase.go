@@ -24,7 +24,7 @@ func NewUserUsecase(
 	return &UserUsecase{repo: repo, encode: encode}
 }
 
-func (usc *UserUsecase) RegisterUser(ctx context.Context, userRequest model.CreateUserRequest) (string, error) {
+func (u *UserUsecase) RegisterUser(ctx context.Context, userRequest model.CreateUserRequest) (string, error) {
 	id, err := helper.ULID()
 	if err != nil {
 		return "", nil
@@ -42,11 +42,11 @@ func (usc *UserUsecase) RegisterUser(ctx context.Context, userRequest model.Crea
 		HashedPassword: hashed,
 	}
 
-	if err := usc.repo.Create(ctx, user); err != nil {
+	if err := u.repo.Create(ctx, user); err != nil {
 		return "", err
 	}
 
-	token, err := usc.encode(user.ID)
+	token, err := u.encode(user.ID)
 	if err != nil {
 		return "", err
 	}

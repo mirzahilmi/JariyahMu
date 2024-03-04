@@ -12,6 +12,7 @@ type UserHandler struct {
 
 func NewUserHandler(usc usecase.UserUsecaseItf, router fiber.Router) {
 	userHandler := UserHandler{usc}
+	router = router.Group("/auth")
 
 	router.Post("/signup", userHandler.SignUp)
 }

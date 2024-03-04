@@ -25,14 +25,14 @@ func NewUserRepository(db *sqlx.DB) UserRepositoryItf {
 	return &UserRepository{db}
 }
 
-func (repo *UserRepository) Create(ctx context.Context, user model.StoreUser) error {
+func (r *UserRepository) Create(ctx context.Context, user model.StoreUser) error {
 	namedQuery, args, err := sqlx.Named(queryCreateUser, user)
 	if err != nil {
 		return err
 	}
 	query := sqlx.Rebind(sqlx.QUESTION, namedQuery)
 
-	tx, err := repo.db.Begin()
+	tx, err := r.db.Begin()
 	if err != nil {
 		return err
 	}
@@ -48,21 +48,21 @@ func (repo *UserRepository) Create(ctx context.Context, user model.StoreUser) er
 	return nil
 }
 
-func (repo *UserRepository) GetIDByEmail(ctx context.Context, email string) (string, error) {
+func (r *UserRepository) GetIDByEmail(ctx context.Context, email string) (string, error) {
 	return "", nil
 }
-func (repo *UserRepository) UpdatePassword(ctx context.Context, id, hashedPassword string) error {
+func (r *UserRepository) UpdatePassword(ctx context.Context, id, hashedPassword string) error {
 	return nil
 }
-func (repo *UserRepository) CreateResetAttempt(ctx context.Context, attempt model.StoreResetAttempt) error {
+func (r *UserRepository) CreateResetAttempt(ctx context.Context, attempt model.StoreResetAttempt) error {
 	return nil
 }
-func (repo *UserRepository) DeleteOldResetAttempt(ctx context.Context, id string) error {
+func (r *UserRepository) DeleteOldResetAttempt(ctx context.Context, id string) error {
 	return nil
 }
-func (repo *UserRepository) GetResetAttemptID(ctx context.Context, id, token string) (string, error) {
+func (r *UserRepository) GetResetAttemptID(ctx context.Context, id, token string) (string, error) {
 	return "", nil
 }
-func (repo *UserRepository) UpdateResetAttemptStatus(ctx context.Context, id string) error {
+func (r *UserRepository) UpdateResetAttemptStatus(ctx context.Context, id string) error {
 	return nil
 }
