@@ -13,10 +13,10 @@ func NewULID() (ulid.ULID, error) {
 	entropy := pool.EntropyPool.Get().(*rand.Rand)
 
 	id, err := ulid.New(ms, entropy)
+	pool.EntropyPool.Put(entropy)
 	if err != nil {
 		return ulid.ULID{}, err
 	}
-	pool.EntropyPool.Put(entropy)
 
 	return id, nil
 }

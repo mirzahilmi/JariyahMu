@@ -1,3 +1,7 @@
+# Load environment variables from .env
+include .env
+export
+
 # ==================================================================================== #
 # HELPERS
 # ==================================================================================== #
@@ -72,6 +76,8 @@ swagger/down:
 # SQL MIGRATIONS
 # ==================================================================================== #
 
+DB_DSN="mysql://${DB_USERNAME}:${DB_PASSWORD}@tcp(${DB_HOST}:${DB_PORT})/${DB_SCHEMA}"
+
 ## migrations/new name=$1: create a new database migration
 .PHONY: migrations/new
 migrations/new:
@@ -84,24 +90,24 @@ endif
 ## migrations/up: apply all up database migrations
 .PHONY: migrations/up
 migrations/up:
-	go run -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path=./assets/migrations -database="mysql://${DB_DSN}" up
+	migrate -path=db/migrations -database=${DB_DSN} up
 
 ## migrations/down: apply all down database migrations
 .PHONY: migrations/down
 migrations/down:
-	go run -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path=./assets/migrations -database="mysql://${DB_DSN}" down
+	migrate -path=db/migrations -database=${DB_DSN} down
 
 ## migrations/goto version=$1: migrate to a specific version number
 .PHONY: migrations/goto
 migrations/goto:
-	go run -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path=./assets/migrations -database="mysql://${DB_DSN}" goto ${version}
+	migrate -path=db/migrations -database=${DB_DSN} goto ${version}
 
 ## migrations/force version=$1: force database migration
 .PHONY: migrations/force
 migrations/force:
-	go run -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path=./assets/migrations -database="mysql://${DB_DSN}" force ${version}
+	migrate -path=db/migrations -database=${DB_DSN} force ${version}
 .PHONY: migrations/version
 
 ## migrations/version: print the current in-use migration version
 migrations/version:
-	go run -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path=./assets/migrations -database="mysql://${DB_DSN}" version
+	migrate -path=db/migrations -database=${DB_DSN} version
