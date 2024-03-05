@@ -1,6 +1,7 @@
-package config
+package test
 
 import (
+	"github.com/MirzaHilmi/JariyahMu/internal/app/config"
 	"github.com/MirzaHilmi/JariyahMu/internal/app/delivery/rest"
 	"github.com/MirzaHilmi/JariyahMu/internal/app/repository"
 	"github.com/MirzaHilmi/JariyahMu/internal/app/usecase"
@@ -20,7 +21,7 @@ type Config struct {
 }
 
 func Bootstrap(conf *Config) {
-	encode, _ := NewPaseto(conf.Viper)
+	encode, _ := config.NewPaseto(conf.Viper)
 	router := conf.App.Group("/api/v1")
 	rest.RegisterUtilsHandler(router)
 

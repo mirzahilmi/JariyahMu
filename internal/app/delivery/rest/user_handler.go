@@ -7,23 +7,23 @@ import (
 )
 
 type UserHandler struct {
-	usc usecase.UserUsecaseItf
+	usecase usecase.UserUsecaseItf
 }
 
-func NewUserHandler(usc usecase.UserUsecaseItf, router fiber.Router) {
-	userHandler := UserHandler{usc}
+func RegisterUserHandler(usecase usecase.UserUsecaseItf, router fiber.Router) {
+	userHandler := UserHandler{usecase}
 	router = router.Group("/auth")
 
-	router.Post("/signup", userHandler.SignUp)
+	router.Post("/signup", userHandler.signUp)
 }
 
-func (h *UserHandler) SignUp(c *fiber.Ctx) error {
+func (h *UserHandler) signUp(c *fiber.Ctx) error {
 	var payloadUser model.CreateUserRequest
 	if err := c.BodyParser(&payloadUser); err != nil {
 		return err
 	}
 
-	token, err := h.usc.RegisterUser(c.Context(), payloadUser)
+	token, err := h.usecase.RegisterUser(c.Context(), payloadUser)
 	if err != nil {
 		return err
 	}
