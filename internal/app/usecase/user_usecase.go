@@ -2,10 +2,13 @@ package usecase
 
 import (
 	"context"
+	"time"
 
+	"aidanwoods.dev/go-paseto"
 	"github.com/MirzaHilmi/JariyahMu/internal/app/repository"
 	"github.com/MirzaHilmi/JariyahMu/internal/pkg/helper"
 	"github.com/MirzaHilmi/JariyahMu/internal/pkg/model"
+	"github.com/spf13/viper"
 )
 
 type UserUsecaseItf interface {
@@ -13,15 +16,17 @@ type UserUsecaseItf interface {
 }
 
 type UserUsecase struct {
-	repo   repository.UserRepositoryItf
-	encode func(id string) (string, error)
+	repo           repository.UserRepositoryItf
+	pasetoInstance helper.Paseto
+	viper          *viper.Viper
 }
 
 func NewUserUsecase(
 	repo repository.UserRepositoryItf,
-	encode func(id string) (string, error),
+	pasetoInstance helper.Paseto,
+	viper *viper.Viper,
 ) UserUsecaseItf {
-	return &UserUsecase{repo: repo, encode: encode}
+	return &UserUsecase{repo, pasetoInstance, viper}
 }
 
 func (u *UserUsecase) RegisterUser(ctx context.Context, userRequest model.CreateUserRequest) (string, error) {
@@ -46,10 +51,19 @@ func (u *UserUsecase) RegisterUser(ctx context.Context, userRequest model.Create
 		return "", err
 	}
 
-	token, err := u.encode(user.ID)
+	token := paseto.NewToken()
+
+	token.SetAudience("*")
+	token.SetIssuer(viper.GetString("APP_HOST"))
+	token.SetSubject(id)
+	token.SetExpiration(time.Now().Add(2 * time.Hour))
+	token.SetNotBefore(time.Now())
+	token.SetIssuedAt(time.Now())
+
+	signed, err := u.pasetoInstance.Encode(token)
 	if err != nil {
 		return "", err
 	}
 
-	return token, nil
+	return signed, nil
 }

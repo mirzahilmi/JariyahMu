@@ -2,6 +2,7 @@ package tests
 
 import (
 	"github.com/MirzaHilmi/JariyahMu/internal/app/config"
+	"github.com/MirzaHilmi/JariyahMu/internal/pkg/helper"
 )
 
 var (
@@ -10,6 +11,7 @@ var (
 	log       = config.NewLogger(&viper)
 	db        = config.NewDatabase(&viper)
 	validator = config.NewValidator()
+	pasetoo   = helper.NewPaseto()
 )
 
 func init() {
@@ -19,5 +21,6 @@ func init() {
 		DB:       &db,
 		Log:      log,
 		Validate: &validator,
+		Paseto:   pasetoo,
 	})
 }

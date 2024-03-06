@@ -1,10 +1,10 @@
 package helper
 
 import (
-	"math/rand"
 	"time"
 
 	"github.com/oklog/ulid/v2"
+	"golang.org/x/exp/rand"
 )
 
 func ULID() (string, error) {

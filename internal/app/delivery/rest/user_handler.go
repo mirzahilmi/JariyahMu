@@ -28,6 +28,7 @@ func (h *UserHandler) signUp(c *fiber.Ctx) error {
 		return err
 	}
 
+	c.Status(fiber.StatusCreated)
 	return c.JSON(fiber.Map{
 		"token": token,
 	})

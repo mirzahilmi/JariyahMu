@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/MirzaHilmi/JariyahMu/internal/app/config"
+	"github.com/MirzaHilmi/JariyahMu/internal/pkg/helper"
 )
 
 func main() {
@@ -12,6 +13,7 @@ func main() {
 	log := config.NewLogger(&viper)
 	db := config.NewDatabase(&viper)
 	validator := config.NewValidator()
+	paseto := helper.NewPaseto()
 
 	config.Bootstrap(&config.Config{
 		Viper:    &viper,
@@ -19,6 +21,7 @@ func main() {
 		DB:       &db,
 		Log:      log,
 		Validate: &validator,
+		Paseto:   paseto,
 	})
 
 	serverPort := viper.GetInt("APP_PORT")
