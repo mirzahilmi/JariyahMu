@@ -3,7 +3,7 @@ package repository
 var (
 	queryCreateUser = `
 		INSERT INTO Users (ID, FullName, Email, HashedPassword, ProfilePicture)
-		VALUE (?, ?, ?, ?, ?);
+		VALUE (:ID, :FullName, :Email, :HashedPassword, :ProfilePicture);
 	`
 	queryGetUserByEmail = `
 		SELECT ID FROM Users 

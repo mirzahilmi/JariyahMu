@@ -1,11 +1,11 @@
 package model
 
 type StoreUser struct {
-	ID             string
-	FullName       string
-	Email          string
-	HashedPassword string
-	ProfilePicture string
+	ID             string `db:"ID"`
+	FullName       string `db:"FullName"`
+	Email          string `db:"Email"`
+	HashedPassword string `db:"HashedPassword"`
+	ProfilePicture string `db:"ProfilePicture"`
 }
 
 type CreateUserRequest struct {
