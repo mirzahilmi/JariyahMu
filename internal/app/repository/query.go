@@ -5,25 +5,26 @@ var (
 		INSERT INTO Users (ID, FullName, Email, HashedPassword, ProfilePicture)
 		VALUE (:ID, :FullName, :Email, :HashedPassword, :ProfilePicture);
 	`
-	queryGetUserByEmail = `
-		SELECT ID FROM Users 
-		WHERE Email = ? LIMIT 1;
+	queryGetUserByParam = `
+		SELECT ID, FullName, Email, HashedPassword, ProfilePicture
+		FROM Users 
+		WHERE %s = ? LIMIT 1;
 	`
 	queryUpdatePassword = `
 		UPDATE Users 
-		SET HashedPassword = ?
-		WHERE ID = ?;
+		SET HashedPassword = :Hashed
+		WHERE ID = :ID;
 	`
 	queryCreateAttempt = `
 		INSERT INTO Users (ID, UserID, Token, ValidUntil) 
-		VALUE (?, ?, ?, ?);
+		VALUE (:ID, :UserID, :Token, :ValidUntil);
 	`
 	queryDeleteOldAttempt = `
 		DELETE FROM ResetAttempts
 		WHERE Succeed = FALSE AND UserID = ?;
 	`
-	queryGetAttempt = `
-		SELECT ValidUntil FROM ResetAttempts
+	queryGetAttemptExpiration = `
+		SELECT Expiration FROM ResetAttempts
 		WHERE UserID = ? AND Token = ?;
 	`
 	queryUpdateAttemptStatus = `

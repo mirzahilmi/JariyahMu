@@ -14,3 +14,17 @@ type CreateUserRequest struct {
 	Password             string `json:"password" validate:"required,min=8"`
 	PasswordConfirmation string `json:"passwordConfirmation" validate:"required,eqfield=Password"`
 }
+
+type UserLoginAttemptRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
+}
+
+type QueryUserByEmailRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+type AttemptResetPasswordRequest struct {
+	ID    string `json:"id" validate:"required,ulid"`
+	Token int    `json:"token" validate:"required,len=6"`
+}
