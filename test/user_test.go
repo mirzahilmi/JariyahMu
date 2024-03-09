@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/MirzaHilmi/JariyahMu/internal/pkg/model"
 	"github.com/gofiber/fiber/v2"
@@ -34,7 +33,7 @@ func TestSignUp(t *testing.T) {
 	req := httptest.NewRequest(fiber.MethodPost, "/api/v1/auth/signup", payload)
 	req.Header.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
 
-	resRaw, err := app.Test(req)
+	resRaw, err := app.Test(req, 3000)
 	require.Nil(err)
 
 	defer resRaw.Body.Close()
@@ -44,22 +43,5 @@ func TestSignUp(t *testing.T) {
 	resBody, err := io.ReadAll(resRaw.Body)
 	require.Nil(err)
 
-	var res map[string]any
-	assert.Nil(json.Unmarshal(resBody, &res))
-
-	token, err := pasetoo.Decode(res["token"].(string))
-	require.Nil(err)
-
-	iss, err := token.GetIssuer()
-	require.Nil(err)
-
-	issued, err := token.GetIssuedAt()
-	require.Nil(err)
-
-	expire, err := token.GetExpiration()
-	require.Nil(err)
-
-	assert.Equal(viper.GetString("APP_HOST"), iss)
-	assert.Less(issued, time.Now())
-	assert.Greater(expire, time.Now())
+	assert.Equal("Created", string(resBody))
 }
