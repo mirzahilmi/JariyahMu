@@ -1,33 +1,61 @@
 package repository
 
 var (
+	// Users
 	queryCreateUser = `
 		INSERT INTO Users (ID, FullName, Email, HashedPassword, ProfilePicture)
 		VALUE (:ID, :FullName, :Email, :HashedPassword, :ProfilePicture);
 	`
 	queryGetUserByParam = `
-		SELECT ID, FullName, Email, HashedPassword, ProfilePicture
-		FROM Users 
-		WHERE %s = ? LIMIT 1;
+		SELECT ID, FullName, Email, HashedPassword, ProfilePicture, Active
+		FROM Users
+		WHERE %s = ?
+		LIMIT 1;
 	`
-	queryUpdatePassword = `
-		UPDATE Users 
-		SET HashedPassword = :Hashed
+	queryUpdateUserPassword = `
+		UPDATE Users
+		SET HashedPassword = :HashedPassword
 		WHERE ID = :ID;
 	`
-	queryCreateAttempt = `
+	queryUpdateUserStatus = `
+		UPDATE Users 
+		SET Active = TRUE
+		WHERE ID = ?;
+	`
+	// UserVerifications
+	queryCreateUserVerification = `
+		INSERT INTO UserVerifications (ID, UserID, Token)
+		VALUE (:ID, :UserID, :Token);
+	`
+	queryGetUserVerificationByIDAndToken = `
+		SELECT ID, UserID, Token
+		FROM UserVerifications
+		WHERE ID = ? AND Token = ?
+		LIMIT 1;
+	`
+	queryUpdateUserVerificationStatus = `
+		UPDATE UserVerifications
+		SET Succeed = TRUE
+		WHERE ID = ?;
+	`
+	// ResetAttempts
+	queryCreateResetAttempt = `
 		INSERT INTO Users (ID, UserID, Token, ValidUntil) 
 		VALUE (:ID, :UserID, :Token, :ValidUntil);
 	`
-	queryDeleteOldAttempt = `
+	queryDeleteOldResetAttempt = `
 		DELETE FROM ResetAttempts
-		WHERE Succeed = FALSE AND UserID = ?;
+		WHERE Succeed = FALSE AND UserID = (
+			SELECT ID FROM Users
+			WHERE Email = ?
+		);
 	`
-	queryGetAttemptExpiration = `
+	queryGetResetAttemptExpiration = `
 		SELECT Expiration FROM ResetAttempts
-		WHERE UserID = ? AND Token = ?;
+		WHERE UserID = ? AND Token = ?
+		LIMIT 1;
 	`
-	queryUpdateAttemptStatus = `
+	queryUpdateResetAttemptStatus = `
 		UPDATE ResetAttempts
 		SET Succeed = TRUE
 		WHERE ID = ?;

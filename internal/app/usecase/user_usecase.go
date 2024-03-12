@@ -2,8 +2,13 @@ package usecase
 
 import (
 	"context"
+	"fmt"
+	"time"
 
+	"aidanwoods.dev/go-paseto"
 	"github.com/MirzaHilmi/JariyahMu/internal/app/repository"
+	"github.com/MirzaHilmi/JariyahMu/internal/pkg/auth"
+	"github.com/MirzaHilmi/JariyahMu/internal/pkg/email"
 	"github.com/MirzaHilmi/JariyahMu/internal/pkg/helper"
 	"github.com/MirzaHilmi/JariyahMu/internal/pkg/model"
 	"github.com/spf13/viper"
@@ -12,26 +17,40 @@ import (
 type UserUsecaseItf interface {
 	RegisterUser(ctx context.Context, user model.CreateUserRequest) error
 	LogUserIn(ctx context.Context, attempt model.UserLoginAttemptRequest) (string, error)
+	VerifyUser(ctx context.Context, id, token string) error
 	AttemptResetPassword(ctx context.Context, query model.QueryUserByEmailRequest) (string, error)
 	ResetPassword(ctx context.Context, attempt model.AttemptResetPasswordRequest) error
 }
 
 type UserUsecase struct {
-	repo           repository.UserRepositoryItf
-	pasetoInstance helper.Paseto
-	viper          *viper.Viper
+	userRepository             repository.UserRepositoryItf
+	userVerificationRepository repository.UserVerificationRepositoryItf
+	resetAttemptRepository     repository.ResetAttemptRepositoryItf
+	mailer                     email.VerificationMailer
+	pasetoInstance             *auth.Paseto
+	viper                      *viper.Viper
 }
 
 func NewUserUsecase(
-	repo repository.UserRepositoryItf,
-	pasetoInstance helper.Paseto,
+	userRepository repository.UserRepositoryItf,
+	userVerificationRepository repository.UserVerificationRepositoryItf,
+	resetAttemptRepository repository.ResetAttemptRepositoryItf,
+	mailer email.VerificationMailer,
+	pasetoInstance *auth.Paseto,
 	viper *viper.Viper,
 ) UserUsecaseItf {
-	return &UserUsecase{repo, pasetoInstance, viper}
+	return &UserUsecase{
+		userRepository,
+		userVerificationRepository,
+		resetAttemptRepository,
+		mailer,
+		pasetoInstance,
+		viper,
+	}
 }
 
 func (u *UserUsecase) RegisterUser(ctx context.Context, userRequest model.CreateUserRequest) error {
-	id, err := helper.ULID()
+	userID, err := helper.ULID()
 	if err != nil {
 		return nil
 	}
@@ -41,41 +60,135 @@ func (u *UserUsecase) RegisterUser(ctx context.Context, userRequest model.Create
 		return nil
 	}
 
-	user := model.StoreUser{
-		ID:             id,
+	user := model.UserResource{
+		ID:             userID,
 		FullName:       userRequest.FullName,
 		Email:          userRequest.Email,
 		HashedPassword: hashed,
 	}
-
-	if err := u.repo.CreateUser(ctx, user); err != nil {
+	if err := u.userRepository.Create(ctx, user); err != nil {
 		return err
 	}
 
-	// token := paseto.NewToken()
+	verificationID, err := helper.ULID()
+	if err != nil {
+		return nil
+	}
 
-	// token.SetAudience("*")
-	// token.SetIssuer(viper.GetString("APP_HOST"))
-	// token.SetSubject(id)
-	// token.SetExpiration(time.Now().Add(2 * time.Hour))
-	// token.SetNotBefore(time.Now())
-	// token.SetIssuedAt(time.Now())
+	attempt := model.UserVerificationResource{
+		ID:     verificationID,
+		UserID: userID,
+		Token:  helper.RandString(32),
+	}
+	if err := u.userVerificationRepository.Create(ctx, attempt); err != nil {
+		return err
+	}
 
-	// signed, err := u.pasetoInstance.Encode(token)
-	// if err != nil {
-	// 	return err
-	// }
+	emailProps := map[string]string{
+		"Name": user.FullName,
+		"URL":  fmt.Sprintf("%s/api/v1/auth/verify/%s?t=%s", u.viper.GetString("APP_HOST"), user.ID, attempt.Token),
+		"Day":  time.Now().Weekday().String(),
+	}
+
+	if err := u.mailer.SendMail(user.Email, email.TemplateURLVerification, emailProps); err != nil {
+		return nil
+	}
 
 	return nil
 }
 
 func (u *UserUsecase) LogUserIn(ctx context.Context, attempt model.UserLoginAttemptRequest) (string, error) {
-	return "", nil
+	user, err := u.userRepository.GetByParam(ctx, "Email", attempt.Email)
+	if err != nil {
+		return "", err
+	}
+
+	if !user.Active {
+		return "", ErrUserNotActive
+	}
+
+	if err := helper.BcryptCompare(user.HashedPassword, attempt.Password); err != nil {
+		return "", err
+	}
+
+	token := paseto.NewToken()
+
+	token.SetAudience("*")
+	token.SetIssuer(u.viper.GetString("APP_HOST"))
+	token.SetSubject(user.ID)
+	token.SetExpiration(time.Now().Add(viper.GetDuration("PASETO_TTL") * time.Minute))
+	token.SetNotBefore(time.Now())
+	token.SetIssuedAt(time.Now())
+
+	signed, err := u.pasetoInstance.Encode(token)
+	if err != nil {
+		return "", err
+	}
+
+	return signed, nil
+}
+
+func (u *UserUsecase) VerifyUser(ctx context.Context, id, token string) error {
+	verificationAttempt, err := u.userVerificationRepository.GetByIDAndToken(ctx, id, token)
+	if err != nil {
+		return ErrVerificationNotExist
+	}
+
+	if err := u.userVerificationRepository.UpdateSucceedStatus(ctx, verificationAttempt.ID); err != nil {
+		return ErrFailToUpdateVerificationStatus
+	}
+
+	if err := u.userRepository.UpdateActiveStatus(ctx, verificationAttempt.ID); err != nil {
+		return ErrFailToUpdateVerificationStatus
+	}
+
+	return nil
 }
 
 func (u *UserUsecase) AttemptResetPassword(ctx context.Context, query model.QueryUserByEmailRequest) (string, error) {
-	return "", nil
+	user, err := u.userRepository.GetByParam(ctx, "Email", query.Email)
+	if err != nil {
+		return "", err
+	}
+
+	if err := u.resetAttemptRepository.DeleteOld(ctx, user.ID); err != nil {
+		return "", err
+	}
+
+	id, err := helper.ULID()
+	if err != nil {
+		return "", nil
+	}
+
+	token, err := helper.RandNumber(6)
+	if err != nil {
+		return "", err
+	}
+
+	attempt := model.StoreResetAttempt{
+		ID:         id,
+		UserID:     user.ID,
+		Token:      token,
+		Expiration: time.Now().Add(10 * time.Minute),
+	}
+
+	if err := u.resetAttemptRepository.Create(ctx, attempt); err != nil {
+		return "", nil
+	}
+
+	emailProps := map[string]string{
+		"Name": user.FullName,
+		"Code": token,
+		"Day":  time.Now().Weekday().String(),
+	}
+
+	if err := u.mailer.SendMail(user.Email, email.TemplateCodeVerification, emailProps); err != nil {
+		return "", nil
+	}
+
+	return id, nil
 }
+
 func (u *UserUsecase) ResetPassword(ctx context.Context, attempt model.AttemptResetPasswordRequest) error {
 	return nil
 }

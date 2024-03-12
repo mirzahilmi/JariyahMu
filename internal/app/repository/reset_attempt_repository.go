@@ -9,10 +9,10 @@ import (
 )
 
 type ResetAttemptRepositoryItf interface {
-	CreateResetAttempt(ctx context.Context, attempt model.StoreResetAttempt) error
-	DeleteOldResetAttempt(ctx context.Context, userID string) error
-	GetResetAttemptExpiration(ctx context.Context, id, token string) (time.Time, error)
-	UpdateResetAttemptStatus(ctx context.Context, id string) error
+	Create(ctx context.Context, attempt model.StoreResetAttempt) error
+	DeleteOld(ctx context.Context, userID string) error
+	GetExpiration(ctx context.Context, id, token string) (time.Time, error)
+	UpdateStatus(ctx context.Context, id string) error
 }
 
 type ResetAttemptRepository struct {
@@ -23,7 +23,7 @@ func NewResetAttemptRepository(db *sqlx.DB) ResetAttemptRepositoryItf {
 	return &ResetAttemptRepository{db}
 }
 
-func (r *ResetAttemptRepository) CreateResetAttempt(ctx context.Context, attempt model.StoreResetAttempt) error {
+func (r *ResetAttemptRepository) Create(ctx context.Context, attempt model.StoreResetAttempt) error {
 	query, args, err := sqlx.Named(queryCreateResetAttempt, attempt)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (r *ResetAttemptRepository) CreateResetAttempt(ctx context.Context, attempt
 	return nil
 }
 
-func (r *ResetAttemptRepository) DeleteOldResetAttempt(ctx context.Context, userID string) error {
+func (r *ResetAttemptRepository) DeleteOld(ctx context.Context, userID string) error {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func (r *ResetAttemptRepository) DeleteOldResetAttempt(ctx context.Context, user
 	return nil
 }
 
-func (r *ResetAttemptRepository) GetResetAttemptExpiration(ctx context.Context, id, token string) (time.Time, error) {
+func (r *ResetAttemptRepository) GetExpiration(ctx context.Context, id, token string) (time.Time, error) {
 	var result = map[string]time.Time{"Expiration": {}}
 	if err := r.db.GetContext(ctx, &result, queryGetResetAttemptExpiration, id, token); err != nil {
 		return time.Time{}, err
@@ -71,7 +71,7 @@ func (r *ResetAttemptRepository) GetResetAttemptExpiration(ctx context.Context, 
 	return result["Expiration"], nil
 }
 
-func (r *ResetAttemptRepository) UpdateResetAttemptStatus(ctx context.Context, id string) error {
+func (r *ResetAttemptRepository) UpdateStatus(ctx context.Context, id string) error {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err

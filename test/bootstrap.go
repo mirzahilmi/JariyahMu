@@ -2,7 +2,8 @@ package test
 
 import (
 	"github.com/MirzaHilmi/JariyahMu/internal/app/config"
-	"github.com/MirzaHilmi/JariyahMu/internal/pkg/helper"
+	"github.com/MirzaHilmi/JariyahMu/internal/pkg/auth"
+	"github.com/MirzaHilmi/JariyahMu/internal/pkg/email"
 )
 
 var (
@@ -11,7 +12,8 @@ var (
 	log       = config.NewLogger(&viper)
 	db        = config.NewDatabase(&viper)
 	validator = config.NewValidator()
-	pasetoo   = helper.NewPaseto()
+	pasetoo   = auth.NewPaseto()
+	mailer    = email.NewMailer(&viper)
 )
 
 func init() {
@@ -21,6 +23,7 @@ func init() {
 		DB:       &db,
 		Log:      log,
 		Validate: &validator,
-		Paseto:   pasetoo,
+		Mailer:   &mailer,
+		Paseto:   &pasetoo,
 	})
 }
