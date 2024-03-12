@@ -1,11 +1,12 @@
 package model
 
-type StoreUser struct {
+type UserResource struct {
 	ID             string `db:"ID"`
 	FullName       string `db:"FullName"`
 	Email          string `db:"Email"`
 	HashedPassword string `db:"HashedPassword"`
 	ProfilePicture string `db:"ProfilePicture"`
+	Active         bool   `db:"Active"`
 }
 
 type CreateUserRequest struct {
