@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 
+	"github.com/bccfilkom-be/osx"
 	"github.com/spf13/viper"
 	"gopkg.in/gomail.v2"
 )
@@ -32,7 +33,11 @@ func NewMailer(viper *viper.Viper) VerificationMailer {
 }
 
 func (g *Gmail) SendMail(to string, view string, props map[string]string) error {
-	tmpl, err := template.ParseFiles(view)
+	wd, err := osx.Workdir()
+	if err != nil {
+		return err
+	}
+	tmpl, err := template.ParseFiles(fmt.Sprintf("%s/views/%s", wd, view))
 	if err != nil {
 		return err
 	}
