@@ -1,9 +1,10 @@
 module github.com/MirzaHilmi/JariyahMu
 
-go 1.22
+go 1.22.0
 
 require (
 	aidanwoods.dev/go-paseto v1.5.1
+	github.com/bccfilkom-be/osx v0.1.0-alpha
 	github.com/go-mysql-org/go-mysql v1.7.0
 	github.com/go-playground/validator/v10 v10.18.0
 	github.com/gofiber/fiber/v2 v2.52.0
