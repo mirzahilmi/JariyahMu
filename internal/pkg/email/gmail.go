@@ -11,7 +11,7 @@ import (
 )
 
 type VerificationMailer interface {
-	SendMail(to string, view string, props map[string]string) error
+	SendMail(to string, subject string, view string, props map[string]string) error
 }
 
 type Gmail struct {
@@ -32,7 +32,7 @@ func NewMailer(viper *viper.Viper) VerificationMailer {
 	return &Gmail{sender, mailer}
 }
 
-func (g *Gmail) SendMail(to string, view string, props map[string]string) error {
+func (g *Gmail) SendMail(to string, subject string, view string, props map[string]string) error {
 	wd, err := osx.Workdir()
 	if err != nil {
 		return err
@@ -48,6 +48,7 @@ func (g *Gmail) SendMail(to string, view string, props map[string]string) error 
 	}
 
 	email := gomail.NewMessage()
+	email.SetHeader("Subject", subject)
 	email.SetHeader("From", g.SenderName)
 	email.SetHeader("To", to)
 	email.SetBody("text/html", buff.String())
