@@ -3,25 +3,35 @@ package rest
 import (
 	"github.com/MirzaHilmi/JariyahMu/internal/app/usecase"
 	"github.com/MirzaHilmi/JariyahMu/internal/pkg/model"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
 type UserHandler struct {
-	usecase usecase.UserUsecaseItf
+	usecase   usecase.UserUsecaseItf
+	validator *validator.Validate
 }
 
-func RegisterUserHandler(usecase usecase.UserUsecaseItf, router fiber.Router) {
-	userHandler := UserHandler{usecase}
+func RegisterUserHandler(
+	usecase usecase.UserUsecaseItf,
+	validator *validator.Validate,
+	router fiber.Router,
+) {
+	userHandler := UserHandler{usecase, validator}
 	router = router.Group("/auth")
 
 	router.Post("/signup", userHandler.signUp)
 	router.Post("/login", userHandler.login)
-	router.Post("/verify/:id", userHandler.verify)
+	router.Get("/verify/:id", userHandler.verify)
 }
 
 func (h *UserHandler) signUp(c *fiber.Ctx) error {
 	var payloadUser model.CreateUserRequest
 	if err := c.BodyParser(&payloadUser); err != nil {
+		return err
+	}
+
+	if err := h.validator.Struct(&payloadUser); err != nil {
 		return err
 	}
 
@@ -47,7 +57,7 @@ func (h *UserHandler) verify(c *fiber.Ctx) error {
 		return err
 	}
 
-	return nil
+	return c.SendStatus(fiber.StatusOK)
 }
 
 func (h *UserHandler) login(c *fiber.Ctx) error {
@@ -61,6 +71,5 @@ func (h *UserHandler) login(c *fiber.Ctx) error {
 		return err
 	}
 
-	c.Status(fiber.StatusOK)
-	return c.JSON(fiber.Map{"token": signedToken})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": signedToken})
 }

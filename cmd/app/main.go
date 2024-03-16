@@ -24,7 +24,7 @@ func main() {
 		Log:      log,
 		Validate: &validator,
 		Paseto:   &paseto,
-		Mailer:   &mailer,
+		Mailer:   mailer,
 	})
 
 	serverPort := viper.GetInt("APP_PORT")

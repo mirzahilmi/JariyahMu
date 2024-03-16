@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,6 +12,9 @@ import (
 	"github.com/MirzaHilmi/JariyahMu/internal/pkg/email"
 	"github.com/MirzaHilmi/JariyahMu/internal/pkg/helper"
 	"github.com/MirzaHilmi/JariyahMu/internal/pkg/model"
+	"github.com/MirzaHilmi/JariyahMu/internal/pkg/response"
+	"github.com/go-sql-driver/mysql"
+	"github.com/gofiber/fiber/v2"
 	"github.com/spf13/viper"
 )
 
@@ -52,14 +56,15 @@ func NewUserUsecase(
 func (u *UserUsecase) RegisterUser(ctx context.Context, userRequest model.CreateUserRequest) error {
 	userID, err := helper.ULID()
 	if err != nil {
-		return nil
+		return err
 	}
 
 	hashed, err := helper.BcryptHash(userRequest.Password)
 	if err != nil {
-		return nil
+		return err
 	}
 
+	mysqlErr := mysqlErrPool.Get().(*mysql.MySQLError)
 	user := model.UserResource{
 		ID:             userID,
 		FullName:       userRequest.FullName,
@@ -67,12 +72,18 @@ func (u *UserUsecase) RegisterUser(ctx context.Context, userRequest model.Create
 		HashedPassword: hashed,
 	}
 	if err := u.userRepository.Create(ctx, user); err != nil {
-		return err
+		switch {
+		case errors.As(err, &mysqlErr) && mysqlErr.Number == 1062:
+			mysqlErrPool.Put(mysqlErr)
+			return response.NewError(fiber.StatusConflict, ErrEmailExist)
+		default:
+			return err
+		}
 	}
 
 	verificationID, err := helper.ULID()
 	if err != nil {
-		return nil
+		return err
 	}
 
 	attempt := model.UserVerificationResource{
@@ -86,12 +97,29 @@ func (u *UserUsecase) RegisterUser(ctx context.Context, userRequest model.Create
 
 	emailProps := map[string]string{
 		"Name": user.FullName,
-		"URL":  fmt.Sprintf("%s/api/v1/auth/verify/%s?t=%s", u.viper.GetString("APP_HOST"), user.ID, attempt.Token),
+		"URL":  fmt.Sprintf("%s/api/v1/auth/verify/%s?t=%s", u.viper.GetString("APP_HOST"), verificationID, attempt.Token),
 		"Day":  time.Now().Weekday().String(),
 	}
 
-	if err := u.mailer.SendMail(user.Email, email.TemplateURLVerification, emailProps); err != nil {
-		return nil
+	if err := u.mailer.SendMail(user.Email, "Account Verification", email.TemplateURLVerification, emailProps); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *UserUsecase) VerifyUser(ctx context.Context, id, token string) error {
+	verificationAttempt, err := u.userVerificationRepository.GetByIDAndToken(ctx, id, token)
+	if err != nil {
+		return ErrVerificationNotExist
+	}
+
+	if err := u.userVerificationRepository.UpdateSucceedStatus(ctx, verificationAttempt.ID); err != nil {
+		return err
+	}
+
+	if err := u.userRepository.UpdateActiveStatus(ctx, verificationAttempt.UserID); err != nil {
+		return err
 	}
 
 	return nil
@@ -128,23 +156,6 @@ func (u *UserUsecase) LogUserIn(ctx context.Context, attempt model.UserLoginAtte
 	return signed, nil
 }
 
-func (u *UserUsecase) VerifyUser(ctx context.Context, id, token string) error {
-	verificationAttempt, err := u.userVerificationRepository.GetByIDAndToken(ctx, id, token)
-	if err != nil {
-		return ErrVerificationNotExist
-	}
-
-	if err := u.userVerificationRepository.UpdateSucceedStatus(ctx, verificationAttempt.ID); err != nil {
-		return ErrFailToUpdateVerificationStatus
-	}
-
-	if err := u.userRepository.UpdateActiveStatus(ctx, verificationAttempt.ID); err != nil {
-		return ErrFailToUpdateVerificationStatus
-	}
-
-	return nil
-}
-
 func (u *UserUsecase) AttemptResetPassword(ctx context.Context, query model.QueryUserByEmailRequest) (string, error) {
 	user, err := u.userRepository.GetByParam(ctx, "Email", query.Email)
 	if err != nil {
@@ -157,7 +168,7 @@ func (u *UserUsecase) AttemptResetPassword(ctx context.Context, query model.Quer
 
 	id, err := helper.ULID()
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	token, err := helper.RandNumber(6)
@@ -173,7 +184,7 @@ func (u *UserUsecase) AttemptResetPassword(ctx context.Context, query model.Quer
 	}
 
 	if err := u.resetAttemptRepository.Create(ctx, attempt); err != nil {
-		return "", nil
+		return "", err
 	}
 
 	emailProps := map[string]string{
@@ -182,8 +193,8 @@ func (u *UserUsecase) AttemptResetPassword(ctx context.Context, query model.Quer
 		"Day":  time.Now().Weekday().String(),
 	}
 
-	if err := u.mailer.SendMail(user.Email, email.TemplateCodeVerification, emailProps); err != nil {
-		return "", nil
+	if err := u.mailer.SendMail(user.Email, "Reset Password Attempt", email.TemplateCodeVerification, emailProps); err != nil {
+		return "", err
 	}
 
 	return id, nil

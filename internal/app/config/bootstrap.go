@@ -20,7 +20,7 @@ type Config struct {
 	Log      *logrus.Logger
 	Validate *validator.Validate
 	Paseto   *auth.Paseto
-	Mailer   *email.VerificationMailer
+	Mailer   email.VerificationMailer
 }
 
 func Bootstrap(conf *Config) {
@@ -30,6 +30,6 @@ func Bootstrap(conf *Config) {
 	userRepo := repository.NewUserRepository(conf.DB)
 	userVerificationRepo := repository.NewUserVerificationRepository(conf.DB)
 	resetAttemptRepo := repository.NewResetAttemptRepository(conf.DB)
-	userUsecase := usecase.NewUserUsecase(userRepo, userVerificationRepo, resetAttemptRepo, *conf.Mailer, conf.Paseto, conf.Viper)
-	rest.RegisterUserHandler(userUsecase, router)
+	userUsecase := usecase.NewUserUsecase(userRepo, userVerificationRepo, resetAttemptRepo, conf.Mailer, conf.Paseto, conf.Viper)
+	rest.RegisterUserHandler(userUsecase, conf.Validate, router)
 }

@@ -1,6 +1,7 @@
 package test
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 )
@@ -30,4 +31,13 @@ func truncate(names ...string) error {
 	case err := <-errChan:
 		return err
 	}
+}
+
+func mustJSONMarshal(v any) []byte {
+	raw, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+
+	return raw
 }

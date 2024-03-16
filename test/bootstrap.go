@@ -7,22 +7,22 @@ import (
 )
 
 var (
-	viper     = config.NewViper()
-	app       = config.NewFiber(&viper)
-	log       = config.NewLogger(&viper)
-	db        = config.NewDatabase(&viper)
-	validator = config.NewValidator()
-	pasetoo   = auth.NewPaseto()
-	mailer    = email.NewMailer(&viper)
+	viperInstance     = config.NewViper()
+	app               = config.NewFiber(&viperInstance)
+	log               = config.NewLogger(&viperInstance)
+	db                = config.NewDatabase(&viperInstance)
+	validatorInstance = config.NewValidator()
+	pasetoo           = auth.NewPaseto()
+	mailer            = email.MailerMock{}
 )
 
 func init() {
 	config.Bootstrap(&config.Config{
-		Viper:    &viper,
+		Viper:    &viperInstance,
 		App:      app,
 		DB:       &db,
 		Log:      log,
-		Validate: &validator,
+		Validate: &validatorInstance,
 		Mailer:   &mailer,
 		Paseto:   &pasetoo,
 	})
