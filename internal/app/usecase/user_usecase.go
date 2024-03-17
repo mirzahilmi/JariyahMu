@@ -128,15 +128,15 @@ func (u *UserUsecase) VerifyUser(ctx context.Context, id, token string) error {
 func (u *UserUsecase) LogUserIn(ctx context.Context, attempt model.UserLoginAttemptRequest) (string, error) {
 	user, err := u.userRepository.GetByParam(ctx, "Email", attempt.Email)
 	if err != nil {
-		return "", err
+		return "", response.NewError(fiber.StatusNotFound, ErrUserNotExist)
 	}
 
 	if !user.Active {
-		return "", ErrUserNotActive
+		return "", response.NewError(fiber.StatusUnauthorized, ErrUserNotActive)
 	}
 
 	if err := helper.BcryptCompare(user.HashedPassword, attempt.Password); err != nil {
-		return "", err
+		return "", response.NewError(fiber.StatusUnauthorized, ErrWrongPassword)
 	}
 
 	token := paseto.NewToken()

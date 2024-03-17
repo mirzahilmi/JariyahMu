@@ -1,9 +1,14 @@
 package test
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http/httptest"
 	"sync"
+
+	"github.com/MirzaHilmi/JariyahMu/internal/pkg/model"
+	"github.com/gofiber/fiber/v2"
 )
 
 func truncate(names ...string) error {
@@ -40,4 +45,21 @@ func mustJSONMarshal(v any) []byte {
 	}
 
 	return raw
+}
+
+func storeUser(user model.CreateUserRequest) error {
+	raw, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+	buff := bytes.NewBuffer(raw)
+
+	req := httptest.NewRequest(fiber.MethodPost, "/api/v1/auth/signup", buff)
+	req.Header.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+	_, err = app.Test(req, -1)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

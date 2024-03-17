@@ -66,6 +66,10 @@ func (h *UserHandler) login(c *fiber.Ctx) error {
 		return err
 	}
 
+	if err := h.validator.Struct(&attempt); err != nil {
+		return err
+	}
+
 	signedToken, err := h.usecase.LogUserIn(c.Context(), attempt)
 	if err != nil {
 		return err

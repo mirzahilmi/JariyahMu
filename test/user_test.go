@@ -102,13 +102,7 @@ func TestUserVerification(t *testing.T) {
 		PasswordConfirmation: "12345678",
 	}
 
-	raw, err := json.Marshal(user)
-	require.Nil(err)
-	buff := bytes.NewBuffer(raw)
-
-	req := httptest.NewRequest(fiber.MethodPost, "/api/v1/auth/signup", buff)
-	req.Header.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
-	_, err = app.Test(req, -1)
+	err := storeUser(user)
 	require.Nil(err)
 
 	var attempt model.UserVerificationResource
@@ -156,7 +150,7 @@ func TestUserVerification(t *testing.T) {
 
 	for _, payload := range cases {
 		t.Run(payload.title, func(t *testing.T) {
-			req = httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/api/v1/auth/verify/%s?t=%s", payload.attemptID, payload.token), nil)
+			req := httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/api/v1/auth/verify/%s?t=%s", payload.attemptID, payload.token), nil)
 			res, err := app.Test(req, -1)
 			require.Nil(err)
 			defer res.Body.Close()
@@ -168,4 +162,120 @@ func TestUserVerification(t *testing.T) {
 		})
 	}
 
+}
+
+func TestFailLogin(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	user := model.CreateUserRequest{
+		FullName:             "John Doe",
+		Email:                "john.doe@gmail.com",
+		Password:             "12345678",
+		PasswordConfirmation: "12345678",
+	}
+
+	err := storeUser(user)
+	require.Nil(err)
+
+	cases := []struct {
+		title          string
+		attempt        model.UserLoginAttemptRequest
+		expectedStatus int
+		expectedResp   []byte
+	}{
+		{
+			title: "UserDoesntExist",
+			attempt: model.UserLoginAttemptRequest{
+				Email:    "john.doa@gmail.com",
+				Password: "12345678",
+			},
+			expectedStatus: fiber.StatusNotFound,
+			expectedResp: mustJSONMarshal(fiber.Map{
+				"errors": fiber.Map{"message": usecase.ErrUserNotExist.Error()},
+			}),
+		},
+		{
+			title: "IncorrectPassword",
+			attempt: model.UserLoginAttemptRequest{
+				Email:    "john.doe@gmail.com",
+				Password: "123456789",
+			},
+			expectedStatus: fiber.StatusUnauthorized,
+			expectedResp: mustJSONMarshal(fiber.Map{
+				"errors": fiber.Map{"message": usecase.ErrWrongPassword.Error()},
+			}),
+		},
+		{
+			title: "ValidationError",
+			attempt: model.UserLoginAttemptRequest{
+				Email:    "john.doe@gmail.com",
+				Password: "1234567",
+			},
+			expectedStatus: fiber.StatusBadRequest,
+			expectedResp: mustJSONMarshal(fiber.Map{
+				"errors": fiber.Map{
+					"message":  utils.StatusMessage(fiber.StatusBadRequest),
+					"password": "must be atleast 8 characters length",
+				},
+			}),
+		},
+	}
+
+	for _, payload := range cases {
+		t.Run(payload.title, func(t *testing.T) {
+			raw, err := json.Marshal(payload.attempt)
+			require.Nil(err)
+			buff := bytes.NewBuffer(raw)
+
+			req := httptest.NewRequest(fiber.MethodPost, "/api/v1/auth/login", buff)
+			req.Header.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+			res, err := app.Test(req, -1)
+			require.Nil(err)
+			defer res.Body.Close()
+			body, err := io.ReadAll(res.Body)
+			require.Nil(err)
+
+			assert.Equal(payload.expectedStatus, res.StatusCode)
+			assert.Equal(payload.expectedResp, body)
+		})
+	}
+}
+
+func TestLogin(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	user := model.CreateUserRequest{
+		FullName:             "John Doe",
+		Email:                "john.doe@gmail.com",
+		Password:             "12345678",
+		PasswordConfirmation: "12345678",
+	}
+
+	err := storeUser(user)
+	require.Nil(err)
+
+	attempt := model.UserLoginAttemptRequest{
+		Email:    user.Email,
+		Password: user.Password,
+	}
+
+	raw, err := json.Marshal(attempt)
+	require.Nil(err)
+	buff := bytes.NewBuffer(raw)
+
+	req := httptest.NewRequest(fiber.MethodPost, "/api/v1/auth/login", buff)
+	req.Header.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+	res, err := app.Test(req, -1)
+	require.Nil(err)
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	require.Nil(err)
+	var resp map[string]any
+	err = json.Unmarshal(body, &resp)
+	require.Nil(err)
+
+	assert.Equal(fiber.StatusOK, res.StatusCode)
+	assert.Contains(resp, "token")
 }
