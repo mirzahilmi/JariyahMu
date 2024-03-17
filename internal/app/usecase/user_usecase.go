@@ -64,17 +64,17 @@ func (u *UserUsecase) RegisterUser(ctx context.Context, userRequest model.Create
 		return err
 	}
 
-	mysqlErr := mysqlErrPool.Get().(*mysql.MySQLError)
 	user := model.UserResource{
 		ID:             userID,
 		FullName:       userRequest.FullName,
 		Email:          userRequest.Email,
 		HashedPassword: hashed,
 	}
+	mysqlErr := mysqlErrPool.Get().(*mysql.MySQLError)
+	defer mysqlErrPool.Put(mysqlErr)
 	if err := u.userRepository.Create(ctx, user); err != nil {
 		switch {
 		case errors.As(err, &mysqlErr) && mysqlErr.Number == 1062:
-			mysqlErrPool.Put(mysqlErr)
 			return response.NewError(fiber.StatusConflict, ErrEmailExist)
 		default:
 			return err
@@ -111,7 +111,7 @@ func (u *UserUsecase) RegisterUser(ctx context.Context, userRequest model.Create
 func (u *UserUsecase) VerifyUser(ctx context.Context, id, token string) error {
 	verificationAttempt, err := u.userVerificationRepository.GetByIDAndToken(ctx, id, token)
 	if err != nil {
-		return ErrVerificationNotExist
+		return response.NewError(fiber.StatusBadRequest, ErrVerificationNotExist)
 	}
 
 	if err := u.userVerificationRepository.UpdateSucceedStatus(ctx, verificationAttempt.ID); err != nil {

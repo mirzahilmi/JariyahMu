@@ -3,10 +3,12 @@ package test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MirzaHilmi/JariyahMu/internal/app/usecase"
 	"github.com/MirzaHilmi/JariyahMu/internal/pkg/model"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
@@ -26,7 +28,6 @@ func TestSignUp(t *testing.T) {
 		title          string
 		expectedStatus int
 		expectedResp   []byte
-		expectedErr    error
 	}{
 		{
 			user: model.CreateUserRequest{
@@ -38,7 +39,6 @@ func TestSignUp(t *testing.T) {
 			title:          "Normal",
 			expectedStatus: fiber.StatusCreated,
 			expectedResp:   []byte(utils.StatusMessage(fiber.StatusCreated)),
-			expectedErr:    nil,
 		},
 		{
 			user: model.CreateUserRequest{
@@ -50,9 +50,8 @@ func TestSignUp(t *testing.T) {
 			title:          "EmailAlreadyExist",
 			expectedStatus: fiber.StatusConflict,
 			expectedResp: mustJSONMarshal(fiber.Map{
-				"errors": fiber.Map{"message": "email already exist"},
+				"errors": fiber.Map{"message": usecase.ErrEmailExist.Error()},
 			}),
-			expectedErr: nil,
 		},
 		{
 			user: model.CreateUserRequest{
@@ -69,7 +68,6 @@ func TestSignUp(t *testing.T) {
 					"password": "must be atleast 8 characters length",
 				},
 			}),
-			expectedErr: nil,
 		},
 	}
 
@@ -93,21 +91,81 @@ func TestSignUp(t *testing.T) {
 	}
 }
 
-// func TestUserVerification(t *testing.T) {
-// 	// assert := assert.New(t)
-// 	require := require.New(t)
+func TestUserVerification(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
 
-// 	var user model.UserResource
-// 	query := `
-// 		SELECT u.ID, u.FullName, u.Email, u.HashedPassword, u.ProfilePicture, u.Active
-// 		FROM Users AS u
-// 		INNER JOIN UserVerifications AS uv
-// 		ON u.ID = uv.UserID
-// 		WHERE u.Active = FALSE AND uv.Succeed = FALSE
-// 		LIMIT 1;
-// 	`
+	user := model.CreateUserRequest{
+		FullName:             "John Doe",
+		Email:                "john.doe@gmail.com",
+		Password:             "12345678",
+		PasswordConfirmation: "12345678",
+	}
 
-// 	err := db.Get(&user, query)
-// 	require.Nil(err)
+	raw, err := json.Marshal(user)
+	require.Nil(err)
+	buff := bytes.NewBuffer(raw)
 
-// }
+	req := httptest.NewRequest(fiber.MethodPost, "/api/v1/auth/signup", buff)
+	req.Header.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+	_, err = app.Test(req, -1)
+	require.Nil(err)
+
+	var attempt model.UserVerificationResource
+	err = db.Get(&attempt, `
+		SELECT ID, UserID, Token FROM UserVerifications 
+		WHERE UserID = (
+			SELECT ID FROM Users WHERE Email = ? LIMIT 1
+		)
+		LIMIT 1;`, user.Email)
+	require.Nil(err)
+
+	cases := []struct {
+		title          string
+		attemptID      string
+		token          string
+		expectedStatus int
+		expectedResp   []byte
+	}{
+		{
+			title:          "WrongToken",
+			attemptID:      attempt.ID,
+			token:          "123456",
+			expectedStatus: fiber.StatusBadRequest,
+			expectedResp: mustJSONMarshal(fiber.Map{
+				"errors": fiber.Map{"message": usecase.ErrVerificationNotExist.Error()},
+			}),
+		},
+		{
+			title:          "WrongID",
+			attemptID:      "AAAAAAAAAAAAAAAAAAAAAAAAAA",
+			token:          attempt.Token,
+			expectedStatus: fiber.StatusBadRequest,
+			expectedResp: mustJSONMarshal(fiber.Map{
+				"errors": fiber.Map{"message": usecase.ErrVerificationNotExist.Error()},
+			}),
+		},
+		{
+			title:          "Normal",
+			attemptID:      attempt.ID,
+			token:          attempt.Token,
+			expectedStatus: fiber.StatusOK,
+			expectedResp:   []byte(utils.StatusMessage(fiber.StatusOK)),
+		},
+	}
+
+	for _, payload := range cases {
+		t.Run(payload.title, func(t *testing.T) {
+			req = httptest.NewRequest(fiber.MethodGet, fmt.Sprintf("/api/v1/auth/verify/%s?t=%s", payload.attemptID, payload.token), nil)
+			res, err := app.Test(req, -1)
+			require.Nil(err)
+			defer res.Body.Close()
+			body, err := io.ReadAll(res.Body)
+			require.Nil(err)
+
+			assert.Equal(payload.expectedStatus, res.StatusCode)
+			assert.Equal(payload.expectedResp, body)
+		})
+	}
+
+}

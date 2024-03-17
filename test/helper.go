@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+
+	"github.com/MirzaHilmi/JariyahMu/internal/pkg/helper"
 )
 
 func truncate(names ...string) error {
@@ -40,4 +42,13 @@ func mustJSONMarshal(v any) []byte {
 	}
 
 	return raw
+}
+
+func mustULID() string {
+	id, err := helper.ULID()
+	if err != nil {
+		panic(err)
+	}
+
+	return id
 }
